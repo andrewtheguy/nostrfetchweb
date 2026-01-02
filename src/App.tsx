@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { PublicKeyEntry } from './components/PublicKeyEntry';
 import { FileList } from './components/FileList';
+import { PreviewModal } from './components/PreviewModal';
 import { DownloadModal } from './components/DownloadModal';
 import type { FileEntry } from './lib/types';
 import './App.css';
@@ -8,7 +9,8 @@ import './App.css';
 type AppState =
   | { screen: 'entry' }
   | { screen: 'browsing'; pubkey: string }
-  | { screen: 'downloading'; pubkey: string; file: FileEntry };
+  | { screen: 'downloading'; pubkey: string; file: FileEntry }
+  | { screen: 'previewing'; pubkey: string; file: FileEntry };
 
 function App() {
   const [state, setState] = useState<AppState>({ screen: 'entry' });
@@ -33,6 +35,18 @@ function App() {
     }
   }, [state]);
 
+  const handlePreview = useCallback((file: FileEntry) => {
+    if (state.screen === 'browsing') {
+      setState({ screen: 'previewing', pubkey: state.pubkey, file });
+    }
+  }, [state]);
+
+  const handleClosePreview = useCallback(() => {
+    if (state.screen === 'previewing') {
+      setState({ screen: 'browsing', pubkey: state.pubkey });
+    }
+  }, [state]);
+
   return (
     <div className="app">
       {state.screen === 'entry' && (
@@ -43,6 +57,7 @@ function App() {
         <FileList
           pubkey={state.pubkey}
           onDownload={handleDownload}
+          onPreview={handlePreview}
           onBack={handleBack}
         />
       )}
@@ -52,12 +67,29 @@ function App() {
           <FileList
             pubkey={state.pubkey}
             onDownload={handleDownload}
+            onPreview={handlePreview}
             onBack={handleBack}
           />
           <DownloadModal
             file={state.file}
             pubkey={state.pubkey}
             onClose={handleCloseDownload}
+          />
+        </>
+      )}
+
+      {state.screen === 'previewing' && (
+        <>
+          <FileList
+            pubkey={state.pubkey}
+            onDownload={handleDownload}
+            onPreview={handlePreview}
+            onBack={handleBack}
+          />
+          <PreviewModal
+            file={state.file}
+            pubkey={state.pubkey}
+            onClose={handleClosePreview}
           />
         </>
       )}

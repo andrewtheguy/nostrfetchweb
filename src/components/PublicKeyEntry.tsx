@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
     normalizeToPublicKey,
     clearSecretKey,
@@ -18,7 +18,7 @@ export function PublicKeyEntry({ onSubmit }: PublicKeyEntryProps) {
     const [displayNpub, setDisplayNpub] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [wasNsec, setWasNsec] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
+
 
     const processInputValue = useCallback((value: string) => {
         setInput(value);
@@ -43,9 +43,7 @@ export function PublicKeyEntry({ onSubmit }: PublicKeyEntryProps) {
 
                 // Clear the input field of the nsec (state + DOM)
                 setInput('');
-                if (inputRef.current) {
-                    inputRef.current.value = '';
-                }
+                setInput('');
             } catch {
                 setError('Invalid nsec format');
             }
@@ -56,22 +54,9 @@ export function PublicKeyEntry({ onSubmit }: PublicKeyEntryProps) {
         processInputValue(e.target.value);
     }, [processInputValue]);
 
-    const handleInput = useCallback((e: React.FormEvent<HTMLInputElement>) => {
-        processInputValue(e.currentTarget.value);
-    }, [processInputValue]);
 
-    useEffect(() => {
-        const intervalId = window.setInterval(() => {
-            const el = inputRef.current;
-            if (!el) return;
-            const value = el.value;
-            if (value && value !== input) {
-                processInputValue(value);
-            }
-        }, 300);
 
-        return () => window.clearInterval(intervalId);
-    }, [input, processInputValue]);
+
 
     const handleSubmit = useCallback((e: React.FormEvent) => {
         e.preventDefault();
@@ -127,12 +112,10 @@ export function PublicKeyEntry({ onSubmit }: PublicKeyEntryProps) {
                             type="password"
                             value={input}
                             onChange={handleInputChange}
-                            onInput={handleInput}
                             placeholder="npub1... or nsec1... (will be converted)"
                             className={error ? 'error' : ''}
                             autoComplete="new-password"
                             spellCheck={false}
-                            ref={inputRef}
                         />
                         {error && <span className="error-message">{error}</span>}
                     </div>

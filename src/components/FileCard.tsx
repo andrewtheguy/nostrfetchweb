@@ -4,6 +4,7 @@ import './FileCard.css';
 interface FileCardProps {
     file: FileEntry;
     onDownload: (file: FileEntry) => void;
+    onPreview: (file: FileEntry) => void;
 }
 
 /**
@@ -34,8 +35,9 @@ function formatDate(timestamp: number): string {
     return date.toLocaleDateString();
 }
 
-export function FileCard({ file, onDownload }: FileCardProps) {
+export function FileCard({ file, onDownload, onPreview }: FileCardProps) {
     const isEncrypted = file.encryption === 'nip44';
+    const canPreview = !isEncrypted && file.file_size <= 1048576; // 1MB
 
     // Get file extension for icon
     const extension = file.file_name.split('.').pop()?.toLowerCase() || '';
@@ -74,6 +76,16 @@ export function FileCard({ file, onDownload }: FileCardProps) {
                     <span className="encryption-badge encrypted" title="Encrypted (NIP-44)">
                         🔒
                     </span>
+                )}
+                {canPreview && (
+                    <button
+                        className="preview-button"
+                        onClick={() => onPreview(file)}
+                        title="Preview"
+                        style={{ marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em' }}
+                    >
+                        👁️
+                    </button>
                 )}
                 <button
                     className="download-button"
