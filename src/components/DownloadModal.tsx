@@ -259,7 +259,7 @@ export function DownloadModal({ file, pubkey, onClose }: DownloadModalProps) {
                             <div className="detail-row">
                                 <span>Encryption:</span>
                                 <span className={`encryption-tag ${isEncrypted ? 'encrypted' : ''}`}>
-                                    {isEncrypted ? '🔒 NIP-44 Encrypted' : '🔓 Unencrypted'}
+                                    {isEncrypted ? '🔒 NIP-44 Encrypted' : 'Unencrypted'}
                                 </span>
                             </div>
                         </div>

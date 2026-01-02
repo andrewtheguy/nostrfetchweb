@@ -70,9 +70,11 @@ export function FileCard({ file, onDownload }: FileCardProps) {
             </div>
 
             <div className="file-actions">
-                <span className={`encryption-badge ${isEncrypted ? 'encrypted' : 'unencrypted'}`}>
-                    {isEncrypted ? '🔒' : '🔓'}
-                </span>
+                {isEncrypted && (
+                    <span className="encryption-badge encrypted" title="Encrypted (NIP-44)">
+                        🔒
+                    </span>
+                )}
                 <button
                     className="download-button"
                     onClick={() => onDownload(file)}
