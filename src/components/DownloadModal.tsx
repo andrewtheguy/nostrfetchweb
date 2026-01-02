@@ -190,23 +190,23 @@ export function DownloadModal({ file, pubkey, onClose }: DownloadModalProps) {
     }, [file, pubkey, triggerDownload]);
 
     const startEncryptedDownload = useCallback(() => {
+        const trimmed = nsecInput.trim();
+        // Clear UI copy immediately to minimize in-memory lifetime.
+        setNsecInput('');
         setNsecError(null);
 
-        if (!isValidNsec(nsecInput.trim())) {
+        if (!isValidNsec(trimmed)) {
             setNsecError('Invalid nsec format');
             return;
         }
 
         let secretKey: Uint8Array;
         try {
-            secretKey = nsecToSecretKey(nsecInput.trim());
+            secretKey = nsecToSecretKey(trimmed);
         } catch {
             setNsecError('Failed to decode nsec');
             return;
         }
-
-        // Immediately clear the input
-        setNsecInput('');
 
         // Start download with the secret key
         downloadEncrypted(secretKey);
@@ -229,11 +229,15 @@ export function DownloadModal({ file, pubkey, onClose }: DownloadModalProps) {
 
     const handleCancel = useCallback(() => {
         abortRef.current = true;
+        setNsecInput('');
+        setNsecError(null);
         onClose();
     }, [onClose]);
 
     const handleRetry = useCallback(() => {
         abortRef.current = false;
+        setNsecInput('');
+        setNsecError(null);
         setState({ status: 'init' });
     }, []);
 
