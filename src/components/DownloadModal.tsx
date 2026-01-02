@@ -13,7 +13,6 @@ interface DownloadModalProps {
 
 type DownloadState =
     | { status: 'init' }
-    | { status: 'needsKey' }
     | { status: 'fetching'; message: string; progress?: number }
     | { status: 'decrypting'; progress: number }
     | { status: 'complete' }
@@ -190,18 +189,7 @@ export function DownloadModal({ file, pubkey, onClose }: DownloadModalProps) {
         }
     }, [file, pubkey, triggerDownload]);
 
-    const handleStart = useCallback(() => {
-        abortRef.current = false;
-
-        if (file.encryption === 'nip44') {
-            setState({ status: 'needsKey' });
-        } else {
-            downloadUnencrypted();
-        }
-    }, [file.encryption, downloadUnencrypted]);
-
-    const handleSubmitKey = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
+    const startEncryptedDownload = useCallback(() => {
         setNsecError(null);
 
         if (!isValidNsec(nsecInput.trim())) {
@@ -224,10 +212,30 @@ export function DownloadModal({ file, pubkey, onClose }: DownloadModalProps) {
         downloadEncrypted(secretKey);
     }, [nsecInput, downloadEncrypted]);
 
+    const handleStart = useCallback(() => {
+        abortRef.current = false;
+
+        if (file.encryption === 'nip44') {
+            startEncryptedDownload();
+        } else {
+            downloadUnencrypted();
+        }
+    }, [file.encryption, downloadUnencrypted, startEncryptedDownload]);
+
+    const handleSubmitKey = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        startEncryptedDownload();
+    }, [startEncryptedDownload]);
+
     const handleCancel = useCallback(() => {
         abortRef.current = true;
         onClose();
     }, [onClose]);
+
+    const handleRetry = useCallback(() => {
+        abortRef.current = false;
+        setState({ status: 'init' });
+    }, []);
 
     const isEncrypted = file.encryption === 'nip44';
 
@@ -253,48 +261,48 @@ export function DownloadModal({ file, pubkey, onClose }: DownloadModalProps) {
                         </div>
 
                         {isEncrypted && (
-                            <div className="encrypted-notice">
-                                <span className="notice-icon">⚠️</span>
-                                <p>This file is encrypted. You'll need to provide your private key (nsec) to decrypt it.</p>
-                            </div>
+                            <>
+                                <div className="encrypted-notice">
+                                    <span className="notice-icon">⚠️</span>
+                                    <p>This file is encrypted. Enter your private key (nsec) to decrypt it.</p>
+                                </div>
+
+                                <form onSubmit={handleSubmitKey} className="key-form">
+                                    <div className="input-group">
+                                        <label>Enter your private key (nsec)</label>
+                                        <input
+                                            type="password"
+                                            value={nsecInput}
+                                            onChange={e => setNsecInput(e.target.value)}
+                                            placeholder="nsec1..."
+                                            autoComplete="off"
+                                            className={nsecError ? 'error' : ''}
+                                        />
+                                        {nsecError && <span className="error-text">{nsecError}</span>}
+                                    </div>
+
+                                    <div className="security-note">
+                                        <span>🔐</span>
+                                        <span>Your key will be used only for decryption and immediately erased from memory.</span>
+                                    </div>
+
+                                    <div className="button-row">
+                                        <button type="button" className="secondary-button" onClick={handleCancel}>
+                                            Cancel
+                                        </button>
+                                        <button type="submit" className="primary-button">
+                                            Decrypt & Download
+                                        </button>
+                                    </div>
+                                </form>
+                            </>
                         )}
 
-                        <button className="primary-button" onClick={handleStart}>
-                            {isEncrypted ? 'Continue to Decryption' : 'Start Download'}
-                        </button>
-                    </div>
-                )}
-
-                {state.status === 'needsKey' && (
-                    <div className="modal-body">
-                        <form onSubmit={handleSubmitKey} className="key-form">
-                            <div className="input-group">
-                                <label>Enter your private key (nsec)</label>
-                                <input
-                                    type="password"
-                                    value={nsecInput}
-                                    onChange={e => setNsecInput(e.target.value)}
-                                    placeholder="nsec1..."
-                                    autoComplete="off"
-                                    className={nsecError ? 'error' : ''}
-                                />
-                                {nsecError && <span className="error-text">{nsecError}</span>}
-                            </div>
-
-                            <div className="security-note">
-                                <span>🔐</span>
-                                <span>Your key will be used only for decryption and immediately erased from memory.</span>
-                            </div>
-
-                            <div className="button-row">
-                                <button type="button" className="secondary-button" onClick={handleCancel}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="primary-button">
-                                    Decrypt & Download
-                                </button>
-                            </div>
-                        </form>
+                        {!isEncrypted && (
+                            <button className="primary-button" onClick={handleStart}>
+                                Start Download
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -334,7 +342,7 @@ export function DownloadModal({ file, pubkey, onClose }: DownloadModalProps) {
                         <p>{state.message}</p>
                         <div className="button-row">
                             <button className="secondary-button" onClick={onClose}>Close</button>
-                            <button className="primary-button" onClick={handleStart}>Retry</button>
+                            <button className="primary-button" onClick={handleRetry}>Retry</button>
                         </div>
                     </div>
                 )}
