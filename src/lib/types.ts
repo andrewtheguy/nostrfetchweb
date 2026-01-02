@@ -45,6 +45,7 @@ export interface Manifest {
   encryption: 'nip44' | 'none';
   chunks: ChunkInfo[];
   relays: string[];
+  mime_type?: string;
 }
 
 /**

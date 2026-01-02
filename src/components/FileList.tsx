@@ -8,10 +8,11 @@ import './FileList.css';
 interface FileListProps {
     pubkey: string;
     onDownload: (file: FileEntry) => void;
+    onPreview: (file: FileEntry) => void;
     onBack: () => void;
 }
 
-export function FileList({ pubkey, onDownload, onBack }: FileListProps) {
+export function FileList({ pubkey, onDownload, onPreview, onBack }: FileListProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [index, setIndex] = useState<FileIndex | null>(null);
@@ -102,6 +103,7 @@ export function FileList({ pubkey, onDownload, onBack }: FileListProps) {
                                         key={file.file_hash}
                                         file={file}
                                         onDownload={onDownload}
+                                        onPreview={onPreview}
                                     />
                                 ))}
                             </div>
