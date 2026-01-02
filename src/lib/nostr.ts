@@ -15,6 +15,7 @@ export const DEFAULT_INDEX_RELAYS = [
     'wss://relay.nostr.band',
     'wss://nos.lol',
     'wss://relay.snort.social',
+    'wss://relay.primal.net',
 ];
 
 /**

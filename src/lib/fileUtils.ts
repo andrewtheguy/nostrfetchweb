@@ -8,8 +8,38 @@ export interface FileFetchResult {
 }
 
 /**
- * Fetch file content (unencrypted) from Nostr
  */
+
+// Basic MIME type mapping
+function getMimeTypeFromName(fileName: string): string | null {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (!ext) return null;
+
+    const map: Record<string, string> = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'svg': 'image/svg+xml',
+        'mp4': 'video/mp4',
+        'webm': 'video/webm',
+        'mp3': 'audio/mpeg',
+        'wav': 'audio/wav',
+        'ogg': 'audio/ogg',
+        'pdf': 'application/pdf',
+        'txt': 'text/plain',
+        'md': 'text/markdown',
+        'json': 'application/json',
+        'js': 'text/javascript',
+        'ts': 'text/typescript',
+        'css': 'text/css',
+        'html': 'text/html'
+    };
+
+    return map[ext] || null;
+}
+
 export async function fetchFileBytes(
     pubkey: string,
     fileHash: string,
@@ -64,7 +94,7 @@ export async function fetchFileBytes(
 
         return {
             data: fileData,
-            mimeType: manifest.mime_type || 'application/octet-stream',
+            mimeType: manifest.mime_type || getMimeTypeFromName(manifest.file_name) || 'application/octet-stream',
             fileName: manifest.file_name
         };
     } finally {
