@@ -47,15 +47,18 @@ function App() {
     }
   }, [state]);
 
+  const showFileList = state.screen === 'browsing' || state.screen === 'downloading' || state.screen === 'previewing';
+  const pubkey = state.screen !== 'entry' ? state.screen === 'browsing' || state.screen === 'downloading' || state.screen === 'previewing' ? state.pubkey : '' : '';
+
   return (
     <div className="app">
       {state.screen === 'entry' && (
         <PublicKeyEntry onSubmit={handleKeySubmit} />
       )}
 
-      {state.screen === 'browsing' && (
+      {showFileList && (
         <FileList
-          pubkey={state.pubkey}
+          pubkey={pubkey}
           onDownload={handleDownload}
           onPreview={handlePreview}
           onBack={handleBack}
@@ -63,35 +66,19 @@ function App() {
       )}
 
       {state.screen === 'downloading' && (
-        <>
-          <FileList
-            pubkey={state.pubkey}
-            onDownload={handleDownload}
-            onPreview={handlePreview}
-            onBack={handleBack}
-          />
-          <DownloadModal
-            file={state.file}
-            pubkey={state.pubkey}
-            onClose={handleCloseDownload}
-          />
-        </>
+        <DownloadModal
+          file={state.file}
+          pubkey={state.pubkey}
+          onClose={handleCloseDownload}
+        />
       )}
 
       {state.screen === 'previewing' && (
-        <>
-          <FileList
-            pubkey={state.pubkey}
-            onDownload={handleDownload}
-            onPreview={handlePreview}
-            onBack={handleBack}
-          />
-          <PreviewModal
-            file={state.file}
-            pubkey={state.pubkey}
-            onClose={handleClosePreview}
-          />
-        </>
+        <PreviewModal
+          file={state.file}
+          pubkey={state.pubkey}
+          onClose={handleClosePreview}
+        />
       )}
     </div>
   );
