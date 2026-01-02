@@ -114,16 +114,28 @@ export async function fetchManifest(
 ): Promise<Manifest | null> {
     console.log('[fetchManifest] Querying for:', { fileHash, pubkey, relays });
 
-    const filter: Filter = {
-        kinds: [EVENT_KINDS.MANIFEST],
-        authors: [pubkey],
-        '#d': [fileHash],
-        limit: 1,
-    };
-    console.log('[fetchManifest] Filter:', filter);
+    const filters: Filter[] = [
+        {
+            kinds: [EVENT_KINDS.MANIFEST],
+            authors: [pubkey],
+            '#x': [fileHash],
+            limit: 1,
+        },
+        {
+            kinds: [EVENT_KINDS.MANIFEST],
+            authors: [pubkey],
+            '#d': [fileHash],
+            limit: 1,
+        },
+    ];
 
-    const events = await pool.querySync(relays, filter);
-    console.log('[fetchManifest] Got events:', events.length);
+    let events: Awaited<ReturnType<typeof pool.querySync>> = [];
+    for (const filter of filters) {
+        console.log('[fetchManifest] Filter:', filter);
+        events = await pool.querySync(relays, filter);
+        console.log('[fetchManifest] Got events:', events.length);
+        if (events.length > 0) break;
+    }
 
     if (events.length === 0) return null;
 
@@ -158,6 +170,12 @@ export interface ChunkEvent {
 const CHUNK_ID_BATCH_SIZE = 200;
 
 function parseChunkIndexFromTags(tags: string[][]): number | null {
+    const chunkTag = tags.find(t => t[0] === 'chunk');
+    if (chunkTag && chunkTag[1]) {
+        const index = parseInt(chunkTag[1], 10);
+        if (!Number.isNaN(index)) return index;
+    }
+
     const dTag = tags.find(t => t[0] === 'd')?.[1];
     if (!dTag) return null;
 
