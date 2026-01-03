@@ -83,11 +83,7 @@ export function FileCard({ file, npub }: FileCardProps) {
                     title="Open file details"
                 >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M14 3h7v7" />
-                        <path d="M10 14L21 3" />
-                        <path d="M21 14v7h-7" />
-                        <path d="M3 10V3h7" />
-                        <path d="M3 21h7v-7" />
+                        <polyline points="9 6 15 12 9 18" />
                     </svg>
                 </Link>
             </div>

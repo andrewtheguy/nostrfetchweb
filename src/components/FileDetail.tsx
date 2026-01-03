@@ -7,7 +7,7 @@ import { decryptChunkBinary } from '../lib/crypto';
 import { clearSecretKey, isValidNsec, nsecToSecretKey } from '../lib/keys';
 import './FileDetail.css';
 
-const MAX_PREVIEW_BYTES = 5 * 1024 * 1024;
+const MAX_PREVIEW_BYTES = 50 * 1024 * 1024;
 
 type DownloadState =
     | { status: 'idle' }
@@ -53,6 +53,8 @@ function getMimeTypeFromName(fileName: string): string | null {
         mp4: 'video/mp4',
         webm: 'video/webm',
         mp3: 'audio/mpeg',
+        aac: 'audio/aac',
+        m4a: 'audio/mp4',
         wav: 'audio/wav',
         ogg: 'audio/ogg',
         pdf: 'application/pdf',
@@ -91,6 +93,7 @@ export function FileDetail({ pubkey, npub, fileHash }: FileDetailProps) {
     const [contentUrl, setContentUrl] = useState<string | null>(null);
     const contentUrlRef = useRef<string | null>(null);
     const [contentType, setContentType] = useState('');
+    const [previewRequested, setPreviewRequested] = useState(false);
 
     const [downloadState, setDownloadState] = useState<DownloadState>({ status: 'idle' });
     const [nsecInput, setNsecInput] = useState('');
@@ -148,7 +151,11 @@ export function FileDetail({ pubkey, npub, fileHash }: FileDetailProps) {
     }, []);
 
     useEffect(() => {
-        if (!manifest || !isPreviewable) {
+        setPreviewRequested(false);
+    }, [pubkey, fileHash, manifest]);
+
+    useEffect(() => {
+        if (!manifest || !isPreviewable || !previewRequested) {
             setPreviewLoading(false);
             setPreviewError(null);
             setPreviewProgress(0);
@@ -200,7 +207,7 @@ export function FileDetail({ pubkey, npub, fileHash }: FileDetailProps) {
                 }
             }
         };
-    }, [pubkey, fileHash, manifest, isPreviewable]);
+    }, [pubkey, fileHash, manifest, isPreviewable, previewRequested]);
 
     const triggerDownload = useCallback((data: Uint8Array, filename: string, mimeType?: string) => {
         const buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
@@ -488,6 +495,15 @@ export function FileDetail({ pubkey, npub, fileHash }: FileDetailProps) {
                                 </div>
                             )}
 
+                            {!isEncrypted && isPreviewable && !previewRequested && (
+                                <div className="preview-message">
+                                    <span>Preview is paused to save bandwidth.</span>
+                                    <button className="secondary-button" onClick={() => setPreviewRequested(true)}>
+                                        Load preview
+                                    </button>
+                                </div>
+                            )}
+
                             {previewLoading && (
                                 <div className="preview-loading">
                                     <div className="spinner"></div>
@@ -504,7 +520,7 @@ export function FileDetail({ pubkey, npub, fileHash }: FileDetailProps) {
                                 </div>
                             )}
 
-                            {!previewLoading && !previewError && isPreviewable && renderPreviewContent()}
+                            {!previewLoading && !previewError && isPreviewable && previewRequested && renderPreviewContent()}
                         </section>
 
                         <section className="download-card">

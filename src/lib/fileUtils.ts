@@ -7,9 +7,6 @@ export interface FileFetchResult {
     fileName: string;
 }
 
-/**
- */
-
 // Basic MIME type mapping
 function getMimeTypeFromName(fileName: string): string | null {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -25,6 +22,8 @@ function getMimeTypeFromName(fileName: string): string | null {
         'mp4': 'video/mp4',
         'webm': 'video/webm',
         'mp3': 'audio/mpeg',
+        'aac': 'audio/aac',
+        'm4a': 'audio/mp4',
         'wav': 'audio/wav',
         'ogg': 'audio/ogg',
         'pdf': 'application/pdf',
@@ -46,8 +45,8 @@ export async function fetchFileBytes(
     onProgress?: (progress: number) => void,
     abortSignal?: AbortSignal
 ): Promise<FileFetchResult> {
+    if (abortSignal?.aborted) throw new Error('Aborted');
     const pool = createPool();
-
     try {
         // Fetch manifest
         const manifest = await fetchManifest(pool, DEFAULT_INDEX_RELAYS, pubkey, fileHash);
@@ -60,7 +59,7 @@ export async function fetchFileBytes(
         // Use relays from manifest if available
         const dataRelays = manifest.relays?.length > 0 ? manifest.relays : DEFAULT_INDEX_RELAYS;
 
-        // Fetch chunks
+        // Fetch chunks (now cached by chunk in nostr.ts)
         const chunks = await fetchChunks(
             pool,
             dataRelays,
