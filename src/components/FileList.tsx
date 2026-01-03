@@ -2,15 +2,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { FileIndex } from '../lib/types';
 import { createPool, fetchFileIndex, DEFAULT_INDEX_RELAYS } from '../lib/nostr';
-import { publicKeyToNpub } from '../lib/keys';
 import { FileCard } from './FileCard';
 import './FileList.css';
 
 interface FileListProps {
     pubkey: string;
+    npub: string;
 }
 
-export function FileList({ pubkey }: FileListProps) {
+export function FileList({ pubkey, npub }: FileListProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [index, setIndex] = useState<FileIndex | null>(null);
@@ -49,8 +49,6 @@ export function FileList({ pubkey }: FileListProps) {
     }, [page, loadIndex]);
 
     const totalPages = index ? index.total_archives + 1 : 1;
-    const npub = publicKeyToNpub(pubkey);
-
     return (
         <div className="file-list-container">
             <header className="file-list-header">
@@ -101,6 +99,7 @@ export function FileList({ pubkey }: FileListProps) {
                                         key={file.file_hash}
                                         file={file}
                                         pubkey={pubkey}
+                                        npub={npub}
                                     />
                                 ))}
                             </div>

@@ -5,6 +5,7 @@ import './FileCard.css';
 interface FileCardProps {
     file: FileEntry;
     pubkey: string;
+    npub: string;
 }
 
 /**
@@ -35,7 +36,7 @@ function formatDate(timestamp: number): string {
     return date.toLocaleDateString();
 }
 
-export function FileCard({ file, pubkey }: FileCardProps) {
+export function FileCard({ file, npub }: FileCardProps) {
     const isEncrypted = file.encryption === 'nip44';
 
     // Get file extension for icon
@@ -78,7 +79,7 @@ export function FileCard({ file, pubkey }: FileCardProps) {
                 )}
                 <Link
                     className="open-button"
-                    to={`/files/${pubkey}/${file.file_hash}`}
+                    to={`/files/${npub}/${file.file_hash}`}
                     title="Open file details"
                 >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

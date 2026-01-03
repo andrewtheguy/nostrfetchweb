@@ -4,7 +4,7 @@ import type { Manifest } from '../lib/types';
 import { createPool, fetchChunks, fetchManifest, DEFAULT_INDEX_RELAYS } from '../lib/nostr';
 import { fetchFileBytes } from '../lib/fileUtils';
 import { decryptChunkBinary } from '../lib/crypto';
-import { clearSecretKey, isValidNsec, nsecToSecretKey, publicKeyToNpub } from '../lib/keys';
+import { clearSecretKey, isValidNsec, nsecToSecretKey } from '../lib/keys';
 import './FileDetail.css';
 
 const MAX_PREVIEW_BYTES = 1024 * 1024;
@@ -18,6 +18,7 @@ type DownloadState =
 
 interface FileDetailProps {
     pubkey: string;
+    npub: string;
     fileHash: string;
 }
 
@@ -75,7 +76,7 @@ function isPreviewableMime(mimeType: string): boolean {
     return false;
 }
 
-export function FileDetail({ pubkey, fileHash }: FileDetailProps) {
+export function FileDetail({ pubkey, npub, fileHash }: FileDetailProps) {
     const [manifest, setManifest] = useState<Manifest | null>(null);
     const [manifestError, setManifestError] = useState<string | null>(null);
     const [manifestLoading, setManifestLoading] = useState(true);
@@ -91,7 +92,6 @@ export function FileDetail({ pubkey, fileHash }: FileDetailProps) {
     const [nsecError, setNsecError] = useState<string | null>(null);
     const downloadAbortRef = useRef(false);
 
-    const npub = useMemo(() => publicKeyToNpub(pubkey), [pubkey]);
     const isEncrypted = manifest?.encryption === 'nip44';
     const mimeTypeGuess = useMemo(() => {
         if (!manifest) return '';
@@ -395,7 +395,7 @@ export function FileDetail({ pubkey, fileHash }: FileDetailProps) {
     return (
         <div className="file-detail-container">
             <header className="file-detail-header">
-                <Link className="back-button" to={`/files/${pubkey}`}>
+                <Link className="back-button" to={`/files/${npub}`}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="15,18 9,12 15,6" />
                     </svg>
