@@ -285,14 +285,37 @@ export async function fetchChunks(
         );
 
         // Wait until we have all chunks or timeout
-        // We use a relatively short timeout for the initial stream because it should be fast
-        const STREAM_TIMEOUT = 10000;
-        const CHECK_INTERVAL = 100;
-        let elapsed = 0;
+        // We use an inactivity timeout to allow slow connections to keep going as long as data is flowing
+        const INACTIVITY_TIMEOUT = 5000; // 5 seconds of silence
+        const MAX_TOTAL_TIMEOUT = 300000; // 5 minutes max total time (safety valve)
 
-        while (chunksByIndex.size < totalChunks && elapsed < STREAM_TIMEOUT) {
+        const startTime = Date.now();
+        let lastActivity = Date.now();
+        let lastSize = 0;
+
+        const CHECK_INTERVAL = 100;
+
+        while (chunksByIndex.size < totalChunks) {
             await new Promise(resolve => setTimeout(resolve, CHECK_INTERVAL));
-            elapsed += CHECK_INTERVAL;
+
+            const now = Date.now();
+
+            // Check for activity (new chunks received)
+            if (chunksByIndex.size > lastSize) {
+                lastActivity = now;
+                lastSize = chunksByIndex.size;
+            }
+
+            // Timeout checks
+            if (now - lastActivity > INACTIVITY_TIMEOUT) {
+                console.log(`[fetchChunks] Stream timed out due to inactivity (${INACTIVITY_TIMEOUT}ms silence)`);
+                break;
+            }
+
+            if (now - startTime > MAX_TOTAL_TIMEOUT) {
+                console.log(`[fetchChunks] Stream reached max total timeout (${MAX_TOTAL_TIMEOUT}ms)`);
+                break;
+            }
         }
 
         sub.close();
