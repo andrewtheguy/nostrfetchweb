@@ -74,7 +74,7 @@
     filter: drop-shadow(0 0 4px rgba(39, 174, 96, 0.5));
 }
 
-.download-button {
+.open-button {
     width: 40px;
     height: 40px;
     padding: 0;
@@ -87,14 +87,15 @@
     color: white;
     cursor: pointer;
     transition: all 0.3s ease;
+    text-decoration: none;
 }
 
-.download-button:hover {
+.open-button:hover {
     transform: scale(1.1);
     box-shadow: 0 5px 20px -5px rgba(102, 126, 234, 0.5);
 }
 
-.download-button svg {
+.open-button svg {
     width: 20px;
     height: 20px;
 }

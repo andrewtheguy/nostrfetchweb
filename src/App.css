@@ -1,3 +1,22 @@
 .app {
   min-height: 100vh;
 }
+
+.route-error {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 6rem 2rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.route-error h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.route-error p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+}

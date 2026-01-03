@@ -5,6 +5,15 @@
     margin: 0 auto;
 }
 
+.file-list-container.is-inactive {
+    position: fixed;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+}
+
 .file-list-header {
     display: flex;
     align-items: center;
@@ -25,6 +34,7 @@
     color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
     transition: all 0.2s ease;
+    text-decoration: none;
 }
 
 .back-button:hover {

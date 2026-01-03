@@ -1,85 +1,111 @@
-import { useState, useCallback } from 'react';
+import { useMemo } from 'react';
+import { Routes, Route, Navigate, useNavigate, useParams, Outlet } from 'react-router-dom';
 import { PublicKeyEntry } from './components/PublicKeyEntry';
 import { FileList } from './components/FileList';
-import { PreviewModal } from './components/PreviewModal';
-import { DownloadModal } from './components/DownloadModal';
-import type { FileEntry } from './lib/types';
+import { FileDetail } from './components/FileDetail';
+import { isValidHexPubkey, isValidNpub, npubToPublicKey, publicKeyToNpub } from './lib/keys';
 import './App.css';
 
-type AppState =
-  | { screen: 'entry' }
-  | { screen: 'browsing'; pubkey: string }
-  | { screen: 'downloading'; pubkey: string; file: FileEntry }
-  | { screen: 'previewing'; pubkey: string; file: FileEntry };
+function normalizePubkeyParam(input: string | undefined): { pubkey: string | null; npub: string | null; error: string | null } {
+  if (!input) {
+    return { pubkey: null, npub: null, error: 'Missing public key.' };
+  }
 
-function App() {
-  const [state, setState] = useState<AppState>({ screen: 'entry' });
+  if (isValidHexPubkey(input)) {
+    const pubkey = input.toLowerCase();
+    return { pubkey, npub: publicKeyToNpub(pubkey), error: null };
+  }
 
-  const handleKeySubmit = useCallback((pubkey: string) => {
-    setState({ screen: 'browsing', pubkey });
-  }, []);
-
-  const handleBack = useCallback(() => {
-    setState({ screen: 'entry' });
-  }, []);
-
-  const handleDownload = useCallback((file: FileEntry) => {
-    if (state.screen === 'browsing') {
-      setState({ screen: 'downloading', pubkey: state.pubkey, file });
+  if (isValidNpub(input)) {
+    try {
+      const pubkey = npubToPublicKey(input);
+      return { pubkey, npub: input, error: null };
+    } catch (err) {
+      return { pubkey: null, npub: null, error: err instanceof Error ? err.message : 'Invalid npub format.' };
     }
-  }, [state]);
+  }
 
-  const handleCloseDownload = useCallback(() => {
-    if (state.screen === 'downloading') {
-      setState({ screen: 'browsing', pubkey: state.pubkey });
-    }
-  }, [state]);
+  return { pubkey: null, npub: null, error: 'Invalid public key. Use an npub or hex public key.' };
+}
 
-  const handlePreview = useCallback((file: FileEntry) => {
-    if (state.screen === 'browsing') {
-      setState({ screen: 'previewing', pubkey: state.pubkey, file });
-    }
-  }, [state]);
-
-  const handleClosePreview = useCallback(() => {
-    if (state.screen === 'previewing') {
-      setState({ screen: 'browsing', pubkey: state.pubkey });
-    }
-  }, [state]);
-
-  const showFileList = state.screen === 'browsing' || state.screen === 'downloading' || state.screen === 'previewing';
-  const pubkey = state.screen !== 'entry' ? state.screen === 'browsing' || state.screen === 'downloading' || state.screen === 'previewing' ? state.pubkey : '' : '';
+function EntryRoute() {
+  const navigate = useNavigate();
 
   return (
+    <PublicKeyEntry onSubmit={(pubkey) => navigate(`/files/${publicKeyToNpub(pubkey)}`)} />
+  );
+}
+
+function FileListRoute() {
+  const { pubkey: pubkeyParam, fileHash } = useParams();
+  const { pubkey, npub, error } = useMemo(() => normalizePubkeyParam(pubkeyParam), [pubkeyParam]);
+
+  if (error || !pubkey) {
+    return (
+      <div className="app">
+        <div className="route-error">
+          <h2>Invalid public key</h2>
+          <p>{error ?? 'Please check the URL and try again.'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!fileHash && npub && pubkeyParam && isValidHexPubkey(pubkeyParam)) {
+    return <Navigate to={`/files/${npub}`} replace />;
+  }
+
+  return (
+    <>
+      <FileList pubkey={pubkey} npub={npub ?? publicKeyToNpub(pubkey)} inactive={Boolean(fileHash)} />
+      <Outlet />
+    </>
+  );
+}
+
+function FileDetailRoute() {
+  const { pubkey: pubkeyParam, fileHash } = useParams();
+  const { pubkey, npub, error } = useMemo(() => normalizePubkeyParam(pubkeyParam), [pubkeyParam]);
+
+  if (error || !pubkey) {
+    return (
+      <div className="app">
+        <div className="route-error">
+          <h2>Invalid public key</h2>
+          <p>{error ?? 'Please check the URL and try again.'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!fileHash || !/^[0-9a-fA-F]{64}$/.test(fileHash)) {
+    return (
+      <div className="app">
+        <div className="route-error">
+          <h2>Invalid file hash</h2>
+          <p>Please check the URL and try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (npub && pubkeyParam && isValidHexPubkey(pubkeyParam)) {
+    return <Navigate to={`/files/${npub}/${fileHash}`} replace />;
+  }
+
+  return <FileDetail pubkey={pubkey} npub={npub ?? publicKeyToNpub(pubkey)} fileHash={fileHash} />;
+}
+
+function App() {
+  return (
     <div className="app">
-      {state.screen === 'entry' && (
-        <PublicKeyEntry onSubmit={handleKeySubmit} />
-      )}
-
-      {showFileList && (
-        <FileList
-          pubkey={pubkey}
-          onDownload={handleDownload}
-          onPreview={handlePreview}
-          onBack={handleBack}
-        />
-      )}
-
-      {state.screen === 'downloading' && (
-        <DownloadModal
-          file={state.file}
-          pubkey={state.pubkey}
-          onClose={handleCloseDownload}
-        />
-      )}
-
-      {state.screen === 'previewing' && (
-        <PreviewModal
-          file={state.file}
-          pubkey={state.pubkey}
-          onClose={handleClosePreview}
-        />
-      )}
+      <Routes>
+        <Route path="/" element={<EntryRoute />} />
+        <Route path="/files/:pubkey" element={<FileListRoute />}>
+          <Route path=":fileHash" element={<FileDetailRoute />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
   );
 }

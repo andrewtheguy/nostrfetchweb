@@ -1,10 +1,11 @@
 import type { FileEntry } from '../lib/types';
+import { Link } from 'react-router-dom';
 import './FileCard.css';
 
 interface FileCardProps {
     file: FileEntry;
-    onDownload: (file: FileEntry) => void;
-    onPreview: (file: FileEntry) => void;
+    pubkey: string;
+    npub: string;
 }
 
 /**
@@ -35,9 +36,8 @@ function formatDate(timestamp: number): string {
     return date.toLocaleDateString();
 }
 
-export function FileCard({ file, onDownload, onPreview }: FileCardProps) {
+export function FileCard({ file, npub }: FileCardProps) {
     const isEncrypted = file.encryption === 'nip44';
-    const canPreview = !isEncrypted && file.file_size <= 1048576; // 1MB
 
     // Get file extension for icon
     const extension = file.file_name.split('.').pop()?.toLowerCase() || '';
@@ -77,27 +77,19 @@ export function FileCard({ file, onDownload, onPreview }: FileCardProps) {
                         🔒
                     </span>
                 )}
-                {canPreview && (
-                    <button
-                        className="preview-button"
-                        onClick={() => onPreview(file)}
-                        title="Preview"
-                        style={{ marginRight: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2em' }}
-                    >
-                        👁️
-                    </button>
-                )}
-                <button
-                    className="download-button"
-                    onClick={() => onDownload(file)}
-                    title={isEncrypted ? 'Download (requires private key)' : 'Download'}
+                <Link
+                    className="open-button"
+                    to={`/files/${npub}/${file.file_hash}`}
+                    title="Open file details"
                 >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7,10 12,15 17,10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
+                        <path d="M14 3h7v7" />
+                        <path d="M10 14L21 3" />
+                        <path d="M21 14v7h-7" />
+                        <path d="M3 10V3h7" />
+                        <path d="M3 21h7v-7" />
                     </svg>
-                </button>
+                </Link>
             </div>
         </div>
     );
